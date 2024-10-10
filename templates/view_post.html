@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Post</title>
+    <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-100">
+<nav class="p-6 bg-white shadow-md">
+    <div class="container flex justify-between mx-auto">
+        <h1 class="text-xl font-semibold text-blue-600">
+            <a href="{% url 'home' %}">My Blog</a>
+        </h1>
+        <div class="flex space-x-4">
+            <a href="{% url 'post-blogs' %}" class="text-gray-600 hover:text-blue-600">Add Post</a>
+            <a href="{% url 'user_profile' %}" class="text-gray-600 hover:text-blue-600">Profile</a>
+            <a href="{% url 'logout' %}" class="text-gray-600 hover:text-blue-600">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<section class="container mx-auto my-12 px-4">
+    <div class="w-full max-w-md p-8 bg-white rounded shadow-lg">
+        <h2 class="mb-6 text-2xl font-semibold text-center text-gray-800">Add Post</h2>
+        <form id="postForm" method="POST">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                <input type="text" name="title" id="title" value="{{ view_post.post.title }}" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-4">
+                <label for="content" class="block text-sm font-medium text-gray-700">Content</label>
+                <textarea name="content" id="content" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-hidden resize-none" oninput="adjustHeight(this)">{{ view_post.post.content }}</textarea>
+
+            </div>
+            <div class="mb-4">
+                <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                <input type="text" name="tags" id="tags" value ="{{ view_post.post.tags }}" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            {% if view_post.users_id == view_post.post.author%}
+            <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded hover:bg-blue-500">Edit</button>
+            {% endif %}
+        </form>
+    </div>
+</section>
+<script>
+  function adjustHeight(textarea) {
+    // Reset the height to auto
+    textarea.style.height = 'auto';
+    // Set the height to the scroll height
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
+  // Automatically adjust height on page load based on existing content
+  document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('content');
+    adjustHeight(textarea);
+  });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('postForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formData = new FormData(this); // Gather form data
+
+            // Convert FormData to a plain object
+            const data = Object.fromEntries(formData.entries());
+
+            axios.post("{% url 'update_post' view_post.post.id %}", data, {
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
+                }
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    alert("Your post has been successfully added!"); // Use an alert instead of a modal
+                    window.location.href = '/home';
+                } else {
+                    alert("There was a problem adding your post. Please try again."); // Alert for failure
+                }
+            })
+            .catch(error => {
+                console.error('There has been a problem with your request:', error);
+                alert("There was a problem adding your post. Please try again."); // Alert for error
+            });
+        });
+    });
+</script>
+</body>
+</html>

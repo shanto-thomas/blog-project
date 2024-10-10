@@ -1,0 +1,108 @@
+<!-- myapp/templates/myapp/login.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Login</title>
+   <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+   <div class="w-full max-w-md p-8 bg-white rounded shadow-lg">
+       <h2 class="mb-6 text-2xl font-semibold text-center text-gray-800">Login</h2>
+       <form id="login-form" method="POST">
+
+<!--           <div class="mb-4">-->
+<!--               <label for="username" class="block text-sm font-medium text-gray-700">UserName</label>-->
+<!--               <input type="username" name="username" id="username" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">-->
+<!--           </div>-->
+<!--           <div class="mb-4">-->
+<!--               <label for="password" class="block text-sm font-medium text-gray-700">Password</label>-->
+<!--               <input type="password" name="password" id="password" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">-->
+<!--           </div>-->
+<!--           <div class="flex items-center justify-between">-->
+<!--               <button type="submit" class="px-4 py-2 font-semibold text-white bg-blue-600 rounded hover:bg-blue-500">Login</button>-->
+<!--               <a href="{% url 'signup' %}" class="text-sm text-blue-600 hover:underline">Sign Up</a>-->
+<!--           </div>-->
+           <div class="mb-4">
+                   <label class="block text-gray-700 text-sm font-bold mb-2" for="username">Username</label>
+                   <input id="username" name="username" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+               </div>
+               <div class="mb-6">
+                   <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Password</label>
+                   <input id="password" name="password" type="password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+               </div>
+               <!-- Error message display -->
+               <div id="error-message" class="text-red-500 mb-4 hidden"></div>
+
+                <button type="submit" class="px-4 py-2 font-semibold text-white bg-blue-600 rounded hover:bg-blue-500">Login</button>
+              <a href="{% url 'signup' %}" class="text-sm text-blue-600 hover:underline">Sign Up</a>
+              <!--  <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg w-full">Login</button>-->
+       </form>
+   </div>
+<script>
+       // Function to get CSRF token from the browser cookie
+       function getCookie(name) {
+           let cookieValue = null;
+           if (document.cookie && document.cookie !== '') {
+               const cookies = document.cookie.split(';');
+               for (let i = 0; i < cookies.length; i++) {
+                   const cookie = cookies[i].trim();
+                   if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                       cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                       break;
+                   }
+               }
+           }
+           return cookieValue;
+       }
+
+
+       const csrftoken = getCookie('csrftoken');  // Retrieve CSRF token
+
+
+       document.getElementById('login-form').addEventListener('submit', async function(event) {
+           event.preventDefault();
+
+
+           // Clear any existing error message
+           const errorMessage = document.getElementById('error-message');
+           errorMessage.textContent = '';
+           errorMessage.classList.add('hidden');
+
+
+           // Get form data
+           const username = document.getElementById('username').value;
+           const password = document.getElementById('password').value;
+
+
+           try {
+               // Post data to login API with CSRF token in headers
+               const response = await axios.post('/api/user_login/', {
+                   username: username,
+                   password: password
+               }, {
+                   headers: {
+                       'X-CSRFToken': csrftoken  // Send CSRF token in the request header
+                   }
+               });
+
+
+               // On successful login, redirect to home page
+               window.location.href = '/home';  // Assuming the home page URL is /home/
+           } catch (error) {
+               // Display error message if login fails
+               if (error.response && error.response.data && error.response.data.error) {
+                   errorMessage.textContent = error.response.data.error;  // Show error from the API
+               } else {
+                   errorMessage.textContent = 'An unexpected error occurred. Please try again.';  // Generic error
+               }
+               errorMessage.classList.remove('hidden');  // Display the error message
+           }
+       });
+   </script>
+</body>
+</html>
+

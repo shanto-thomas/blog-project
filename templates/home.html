@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+
+</head>
+<body class="bg-gray-100">
+    <nav class="p-6 bg-white shadow-md">
+        <div class="container flex justify-between mx-auto">
+            <h1 class="text-xl font-semibold text-blue-600">
+                <a href="{% url 'home' %}">
+                    My Blog
+                </a>
+            </h1>
+            <div class="flex space-x-4">
+                <a href="{% url 'post-blogs' %}" class="text-gray-600 hover:text-blue-600">Add Post</a>
+                <a href="{% url 'user_profile' %}" class="text-gray-600 hover:text-blue-600">Profile</a>
+                <a href="{% url 'logout' %}" class="text-gray-600 hover:text-blue-600">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <section class="container mx-auto my-12">
+        <h2 class="mb-6 text-2xl font-semibold text-center text-gray-800">Recent Posts</h2>
+        <div class="grid gap-6 md:grid-cols-3">
+            {% if post_list %}
+                <!-- Example Post Card -->
+                {% for data in post_list.post_data %}
+                <div class="p-6 bg-white rounded shadow">
+                    <h3 class="mb-2 text-lg font-semibold">{{ data.title }}</h3>
+                    <p class="mb-4 text-gray-600 content">
+                        {{ data.content|truncatechars:253 }}
+                        <span class="more-content hidden">{{ data.content|slice:":-1" }}</span>
+                    </p>
+<!--                    <button class="show-more text-blue-500 hover:underline" onclick="showMore(this)">Show More</button>-->
+                    <a href="{% url 'view_posts' data.id %}" class="text-blue-600 hover:underline">View</a>
+                    {% if post_list.users_id == data.author%}
+                        <button class="text-red-600 hover:underline" onclick="deletePost({{ data.id }})"> <i class="fas fa-trash-alt"></i>
+                            Delete</button>
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-3 p-6 bg-white rounded shadow text-center">
+                    <p class="text-gray-600">No posts found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <script>
+        function showMore(button) {
+            const content = button.previousElementSibling; // Get the content paragraph
+            const moreContent = content.querySelector(".more-content"); // Get the hidden content
+
+            // Toggle visibility of the additional content
+            if (moreContent.classList.contains("hidden")) {
+                content.innerHTML += moreContent.innerHTML; // Append the hidden content
+                moreContent.classList.remove("hidden"); // Remove hidden class
+                button.style.display = 'none'; // Hide the button after showing all content
+            }
+        }
+
+        function deletePost(postId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(`/api/delete-post/${postId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Post deleted successfully');
+                    location.reload(); // Refresh the page after deletion
+                } else {
+                    alert('Failed to delete post');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the post.');
+            });
+        }
+
+    </script>
+</body>
+</html>
